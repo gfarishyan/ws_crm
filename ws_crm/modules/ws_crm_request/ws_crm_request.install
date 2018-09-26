@@ -1,0 +1,115 @@
+<?php
+/**
+ * Implements hook_schema().
+ */
+function ws_crm_request_schema() {
+  $schema['ws_crm_request'] = array(
+    'description' => t('Ws Crm Requests'),
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => t('Request type'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => t('Request creator'),
+        'default' => 0,
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('Requests creation timestamp')
+      ),
+      'changed' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('Request updated timestamp')
+      ),
+      'closed' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('Request close timestamp')
+      ),
+      'request_status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('Request status')
+      ),
+      'title' => array(
+        'description' => t('Request title'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function ws_crm_request_install() {
+  $field_name = 'field_crm_customer';
+  $field = field_info_field($field_name);
+  
+  if (!module_exists('ws_crm_customer')) {
+    return;
+  }
+  
+  if (empty($field)) {
+    $field = field_create_field(array(
+      'type' => 'entityreference',
+      'field_name' => $field_name,
+      'settings' => array(
+        'handler' => 'views',
+        'handler_settings' => array(
+          'target_bundles' => array(
+            'ws_crm_customer' => 'ws_crm_customer',
+          ),
+          'view' => array(
+            'view_name' => 'crm_customers',
+            'display_name' => 'entityreference_1',
+            'args' => array(),
+          ),
+        ),
+        'target_type' => 'ws_crm_customer',
+      ),
+      'cardinality' => 1,
+    ));
+  }
+  
+  field_info_cache_clear();
+  
+  $instance = field_info_instance('ws_crm_request', $field_name, 'ws_crm_request');
+  if (empty($instance)) {
+    field_create_instance(
+      array(
+        'field_name' => $field_name,
+        'entity_type' => 'ws_crm_request',
+        'bundle' => 'ws_crm_request',
+        'label' => 'Customer',
+        'required' => TRUE,
+        'settings' => array(),
+        'widget' => array(
+          'type' => 'entityreference_autocomplete',
+        ),
+      )
+    );
+  }
+}

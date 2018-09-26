@@ -1,0 +1,236 @@
+<?php
+/**
+ * Implement hook_entity_info().
+ */
+function ws_crm_request_entity_info() {
+  $info['ws_crm_request'] = array(
+    'label' => t('Requests'),
+    'entity class' => 'Entity',
+    'controller class' => 'WsCrmRequestController',
+    'base table' => 'ws_crm_request',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'bundle' => 'type',
+      'label' => 'title'
+    ),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'load hook' => 'entity_load_single',
+    'admin ui' => array(
+      'path' => 'admin/ws-crm/requests',
+      'controller class' => 'EntityDefaultUIController',
+    ),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom_settings' => TRUE,
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'module' => 'ws_crm_request',
+    'access callback' => 'ws_crm_access',
+    'views controller class' => 'WsCrmRequestViewsController',
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function ws_crm_request_entity_info_alter(&$entity_info) {
+  $entity_info['ws_crm_request']['bundles']['ws_crm_request'] = array(
+    'label' => 'Requests',
+    'admin' => array(
+      'path' => 'admin/structure/ws-crm/requests-types/%',
+      'real path' => 'admin/structure/ws-crm/requests-types/ws_crm_request',
+      'bundle argument' => 4,
+     ),
+  );
+}
+
+
+function ws_crm_request_entity_property_info()  {
+  $properties = &$info['ws_crm_request']['properties'];
+  $properties['id'] = array(
+    'label' => t('Request id'),
+    'description' => t('Request id'),
+    'schema field' => 'id',
+  );
+  
+  $properties['title'] = array(
+    'label' => t('Title'),
+    'description' => t('Title'),
+    'schema field' => 'title',
+  );
+  
+  $properties['uid'] = array(
+    'label' => t('Creator'),
+    'description' => t('Creator'),
+    'schema field' => 'uid',
+    'type' => 'user',
+  );
+  
+  $properties['created'] = array(
+    'label' => t('Created'),
+    'description' => t('Created'),
+    'schema field' => 'created',
+    'type' => 'date',
+  );
+  
+  $properties['changed'] = array(
+    'label' => t('Changed date'),
+    'description' => t('Changed date'),
+    'schema field' => 'changed',
+    'type' => 'date',
+  );
+  
+  $properties['closed'] = array(
+    'label' => t('Closed date'),
+    'description' => t('Closed date'),
+    'schema field' => 'closed',
+    'type' => 'date',
+  );
+  
+  $properties['request_status'] = array(
+    'label' => t('Status'),
+    'description' => t('Status'),
+    'schema field' => 'request_status',
+    'options list' => 'ws_crm_request_status_list',
+  );
+  return $info;
+}
+
+
+function ws_crm_request_status_list() {
+  return array(
+    0 => t('New'),
+    10 => t('Processing'),
+    20 => t('Closed'),
+  );
+}
+
+/**
+ * Implements hook_form().
+ */
+function ws_crm_request_form($form, &$form_state) {
+ $ws_crm_request = $form_state['ws_crm_request'];
+ $form['title'] = array(
+   '#type' => 'textfield',
+   '#title' => t('Title'),
+   '#description' => t('Title'),
+   '#required' => TRUE,
+   '#default_value' => $ws_crm_request->title,
+ );
+ 
+ $form['request_status'] = array(
+   '#type' => 'select',
+   '#title' => t('Status'),
+   '#description' => t('Status'),
+   '#required' => TRUE,
+   '#options' => ws_crm_request_status_list(),
+   '#default_value' => $ws_crm_request->request_status,
+ );
+ 
+ field_attach_form('ws_crm_request', $ws_crm_request, $form, $form_state);
+ 
+ $form['actions'] = array(
+  '#type' => 'actions',
+ );
+
+ $form['actions']['submit'] = array(
+   '#type' => 'submit',
+   '#value' => t('Save'),
+ );
+
+ if (!empty($ws_crm_request->id)) {
+   $form['actions']['submit']['#suffix'] = l(t('Delete'), 'admin/ws-crm/requests/manage/' . $ws_crm_request->id . '/delete');
+ }
+ 
+ return $form;
+}
+
+function ws_crm_request_views_api() {
+  return array(
+    'api' => '3.0'
+  );
+}
+
+/**
+ * Implements hook_form().
+ */
+function ws_crm_request_form_submit($form, &$form_state) {
+ $ws_crm_request = $form_state['ws_crm_request'];
+ entity_form_submit_build_entity('ws_crm_request', $ws_crm_request, $form, $form_state);
+ entity_save('ws_crm_request', $ws_crm_request);
+ $status = ws_crm_request_status_list()[$ws_crm_request->request_status];
+ drupal_set_message(t('Requests has been saved with status "%status".', array('%status' => $status)));
+ $form_state['redirect'] = array(
+   'admin/ws-crm/requests'
+ );
+}
+
+
+/**
+ * Implements hook_action_info().
+ */
+function ws_crm_request_action_info() {
+  return array(
+    'ws_crm_request_change_status' => array(
+      'type' => 'ws_crm_request',
+      'label' => t('Change request status'),
+      'vbo_configurable' => TRUE,
+      'configurable' => FALSE,
+      'behavior' => array('changes_property'),
+      'triggers' => array('entity_presave', 'entity_insert', 'entity_update'),
+   ),
+  );
+}
+ 
+function ws_crm_request_change_status(&$ws_crm_request, $context) {
+  $statues = ws_crm_request_status_list();
+  global $user; 
+  if ($ws_crm_request->request_status !== $context['status']) {
+    $now = time();
+    $old_status = $ws_crm_request->request_status;
+    $ws_crm_request->changed = $now;
+    $ws_crm_request->request_status = $context['status'];
+    if ($context['status'] == 20 ) {
+      $ws_crm_request->closed = $now;
+    }
+    
+    watchdog('ws_crm_request', '%user (%uid) changed Request (%request_id) status from "%old_status" to "%new_status"', array(
+     '%request_id' => $ws_crm_request->id,
+     '%user' => $user->name,
+     '%uid' => $user->uid, 
+     '%old_status' => $statues[$old_status], 
+     '%new_status' => $statues[$context['status']]), WATCHDOG_INFO);
+    entity_save('ws_crm_request', $ws_crm_request);
+  }
+}
+
+
+function ws_crm_request_change_status_form($options, $entity_type) {
+  $form = array();
+  $form['status'] = array(
+    '#type' => 'select', 
+    '#title' => t('Choose status to set'),
+    '#options' => ws_crm_request_status_list(),
+    '#default_value' => !empty($options['status']) ? $options['status'] : '',
+  );
+  
+  return $form;
+}
+
+function ws_crm_request_change_status_submit($form, $form_state) {
+  $return = array(); 
+  $return['status'] = $form_state['values']['status'];
+  return $return;
+}
+
+function ws_crm_access() {
+  return TRUE;
+}

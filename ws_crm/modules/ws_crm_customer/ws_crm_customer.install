@@ -1,0 +1,52 @@
+<?php
+/**
+ * Implements hook_schema().
+ */
+ 
+function ws_crm_customer_schema() {
+  $schema['ws_crm_customer'] = array(
+    'description' => t('Ws Crm customers'),
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => t('Customer type'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => t('Creator of customer'),
+        'default' => 0,
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('customer info creation timestamp')
+      ),
+      'changed' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('customer info updated timestamp')
+      ),
+      'full_name' => array(
+        'description' => t('Customer full name'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('id'),
+
+  );
+  return $schema;
+}

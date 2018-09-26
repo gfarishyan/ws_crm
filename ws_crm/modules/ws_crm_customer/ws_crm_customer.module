@@ -1,0 +1,147 @@
+<?php
+/**
+ * Implement hook_entity_info().
+ */
+function ws_crm_customer_entity_info() {
+  $info['ws_crm_customer'] = array(
+    'label' => t('Crm Customer'),
+    'entity class' => 'Entity',
+    'controller class' => 'WsCrmCustomerController', //WSCrmCustomerController
+    'base table' => 'ws_crm_customer',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'bundle' => 'type',
+      'label' => 'full_name'
+    ),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'bundles' => array(
+    ),
+    'load hook' => 'entity_load_single',
+    'admin ui' => array(
+      'path' => 'admin/ws-crm/customers',
+      'controller class' => 'EntityDefaultUIController',
+    ),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom_settings' => TRUE,
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'module' => 'ws_crm_customer',
+    'access callback' => 'ws_crm_customer_access',
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function ws_crm_customer_entity_info_alter(&$entity_info) {
+  $entity_info['ws_crm_customer']['bundles']['ws_crm_customer'] = array(
+    'label' => 'Customer',
+    'admin' => array(
+      'path' => 'admin/structure/ws-crm/customer-types/manage/%customer_type',
+      'real path' => 'admin/structure/ws-crm/customer-types/manage/ws_crm_customer',
+      'bundle argument' => 5,
+     ),
+  );
+}
+
+
+function ws_crm_customer_entity_property_info()  {
+  $properties = &$info['ws_crm_customer']['properties'];
+  $properties['id'] = array(
+    'label' => t('Customer id'),
+    'description' => t('Customer id'),
+    'schema field' => 'id',
+  );
+  
+  $properties['full_name'] = array(
+    'label' => t('Customer full name'),
+    'description' => t('Customer full name'),
+    'schema field' => 'full_name',
+  );
+  
+  $properties['uid'] = array(
+    'label' => t('User creator'),
+    'description' => t('Creator'),
+    'schema field' => 'uid',
+    'type' => 'user',
+  );
+  
+  $properties['created'] = array(
+    'label' => t('Created'),
+    'description' => t('Created'),
+    'schema field' => 'created',
+    'type' => 'date',
+  );
+  
+  $properties['changed'] = array(
+    'label' => t('Changed date'),
+    'description' => t('Changed date'),
+    'schema field' => 'changed',
+    'type' => 'date',
+  );
+  
+  return $info;
+}
+
+/**
+ * Implements hook_form().
+ */
+function ws_crm_customer_form($form, &$form_state) {
+ $ws_crm_customer = $form_state['ws_crm_customer'];
+ field_attach_form('ws_crm_customer', $ws_crm_customer, $form, $form_state);
+ $form['full_name'] = array(
+   '#type' => 'textfield',
+   '#title' => t('Full name'),
+   '#description' => t('Customer full name'),
+   '#required' => TRUE,
+   '#default_value' => $ws_crm_customer->full_name
+ );
+ 
+ $form['actions'] = array(
+   '#type' => 'actions',
+ );
+
+ $form['actions']['submit'] = array(
+   '#type' => 'submit',
+   '#value' => t('Save'),
+ );
+
+ if ($ws_crm_customer->id) {
+   $form['actions']['submit']['#suffix'] = l(t('Delete'), 'admin/ws-crm/customers/manage/' . $ws_crm_customer->id . '/delete');
+ }
+ 
+ return $form;
+}
+
+
+/**
+ * Implements hook_form().
+ */
+function ws_crm_customer_form_submit($form, &$form_state) {
+ $ws_crm_customer = $form_state['ws_crm_customer'];
+ entity_form_submit_build_entity('ws_crm_customer', $ws_crm_customer, $form, $form_state);
+ entity_save('ws_crm_customer', $ws_crm_customer);
+ drupal_set_message(t('Customer %customer successfully saved', array('%customer' => check_plain($ws_crm_customer->full_name))));
+ $form_state['redirect'] = array(
+   'admin/ws-crm/customers'
+ );
+}
+
+function ws_crm_customer_access() {
+  return TRUE;
+}
+
+function ws_crm_customer_views_api() {
+  return array(
+    'api' => '3.0'
+  );
+}

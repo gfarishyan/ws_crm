@@ -1,0 +1,13 @@
+name="Crm Requests"
+core=7.x
+
+dependencies[] = entity
+dependencies[] = views
+dependencies[] = entityreference
+
+files[] = includes/ws_crm_request.controller.inc
+files[] = includes/ws_crm_request.views.controller.inc
+files[] = views/handlers/ws_crm_request_request_duration_status.inc
+files[] = views/handlers/ws_crm_request_avarage_time.inc
+
+stylesheets[all][]  = css/ws_crm_request.css

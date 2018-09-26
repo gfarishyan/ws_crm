@@ -1,0 +1,27 @@
+div.green {
+  background: green;
+  width: 100;
+  content: " ";
+  height: 12px;
+  display: block;
+}
+
+div.red {
+  background: red;
+  width: 100;
+  content: " ";
+  height: 12px;
+  display: block;
+}
+
+.avarage-request-time {
+  float: right;
+  background: #e6e6e6;
+}
+
+.avarage-request-time .label {
+  font-weight: bold;
+  background: #FFFFFF;
+  display: inline-block;
+  margin-right: 10px;
+}

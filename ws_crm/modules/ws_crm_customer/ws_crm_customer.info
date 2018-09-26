@@ -1,0 +1,7 @@
+name="Crm Customer"
+core=7.x
+
+dependencies[] = entity
+dependencies[] = views
+
+files[] = includes/ws_crm_customer.controller.inc

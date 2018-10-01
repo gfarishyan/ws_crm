@@ -135,8 +135,9 @@ function ws_crm_request_form($form, &$form_state) {
    '#default_value' => $ws_crm_request->request_status,
  );
  
- field_attach_form('ws_crm_request', $ws_crm_request, $form, $form_state);
  
+ field_attach_form('ws_crm_request', $ws_crm_request, $form, $form_state);
+ $form['#validate'] = array('ws_crm_request_form_validate');
  $form['actions'] = array(
   '#type' => 'actions',
  );
@@ -159,8 +160,18 @@ function ws_crm_request_views_api() {
   );
 }
 
+
 /**
- * Implements hook_form().
+ * Implements hook_form_validate().
+*/
+
+function ws_crm_request_form_validate($form, &$form_state) {
+
+}
+
+
+/**
+ * Implements hook_form_submit().
  */
 function ws_crm_request_form_submit($form, &$form_state) {
  $ws_crm_request = $form_state['ws_crm_request'];
